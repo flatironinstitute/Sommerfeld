@@ -1,0 +1,1 @@
+gfortran -std=legacy -w sommerfeldsqrt5_dr.f sommerfeld2drouts_alpert3.f ../Utils/alpertsqrt.f ../../Common/prini.f ../../Common/hank103.f ../../Common/legeexps.f discretizer.f /usr/local/lib/libfmm2d.a
