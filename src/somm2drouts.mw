@@ -1,0 +1,81 @@
+@function [somm_disc] = get_sommerfeld_disc(zks, xylim, tol, opts)
+%  This subroutine returns the sommerfeld discretization for 
+%  evaluating corrections to half-space greens' function
+%  using alpert corrections
+%
+%  Input arguments:
+%    zks: complex(2)
+%      wave numbers in the upper and lower half planes
+%      respectively
+%    xylim: double (2,2)
+%      [xmin, xmax; ymin, ymax]
+%      x extent computed using xmax - xmin
+%      ymin determines closest source, and ymax
+%      determines the furthest out sommerfeld integral
+%      is evaluated
+%    tol: double 
+%      tolerance
+%    opts: options struct (optional)
+%      opts.norder (16) - order of alpert rule correction
+%      opts.nover (20) - oversampling paarameter 
+%
+
+   if nargin < 4
+     opts = [];
+   end
+
+   norder = 16;
+   if isfield(opts, 'norder')
+      norder = opts.norder;
+   end
+
+   nover = 20;
+   if isfield(opts, 'nover')
+     nover = opts.nover;
+   end
+
+   if nargin < 3
+     tol = 1e-8;
+   end
+
+   somm_disc = [];
+   xmin = xylim(1,1);
+   xmax = xylim(1,2);
+
+   ymin = xylim(2,1);
+   ymax = xylim(2,2);
+
+   xc = 0.5*(xmin + xmax);
+   xext = 0.5*(xmax - xmin);
+
+   nmax = 100000;
+   xnodes = zeros(nmax,1);
+   weights1 = zeros(nmax,1);
+   xfac1 = zeros(nmax,1);
+   yfac1 = zeros(nmax,1);
+
+   weights2 = zeros(nmax,1);
+   xfac2 = zeros(nmax,1);
+   yfac2 = zeros(nmax,1);
+
+   zk1 = zks(1);
+   zk2 = zks(2);
+
+   tmax = 1.3d0*real(zk2) + abs(log(tol))/ymin + 100;
+   ntot = 0;
+
+   # FORTRAN getsommerquad_2d2mi(dcomplex zk1, dcomplex zk2, dcomplex zk1, double tmax, int norder, double tol, double xext, double ymax, int nover, inout int[1] ntot, int nmax, inout double[nmax] xnodes, inout dcomplex[nmax] weights1, inout dcomplex[nmax] xfac1, inout dcomplex[nmax] yfac1);
+   # FORTRAN getsommerquad_2d2mi(dcomplex zk1, dcomplex zk2, dcomplex zk2, double tmax, int norder, double tol, double xext, double ymax, int nover, inout int[1] ntot, int nmax, inout double[nmax] xnodes, inout dcomplex[nmax] weights2, inout dcomplex[nmax] xfac2, inout dcomplex[nmax] yfac2);
+
+   somm_disc.n = ntot;
+   somm_disc.x = xnodes(1:ntot) + xc;
+   somm_disc.w1 = weights1(1:ntot);
+   somm_disc.xfac1 = xfac1(1:ntot);
+   somm_disc.yfac1 = yfac1(1:ntot);
+
+   somm_disc.w2 = weights2(1:ntot);
+   somm_disc.xfac2 = xfac2(1:ntot);
+   somm_disc.yfac2 = yfac2(1:ntot);
+
+
+end
