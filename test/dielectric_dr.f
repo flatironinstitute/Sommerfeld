@@ -68,18 +68,29 @@ c
       real *8 source1(2,nsmax),ztrg1(2),dipvec1(2,nsmax),center(2)
       real *8 dipvec2(2,nsmax)
       real *8 source2(2,nsmax),ztrg2(2)
-      real *8 pi,d,u,v,rlam,tmax,a,b,t,h
+      real *8 pi,d,u,v,rlam,tmax,a,b,t,h,ra
       real *8 rx,ry,tol,rxmax,rymin,rymax,thresh
 c
       complex *16 h0,h1,pot,potd,grad(2),hess(3)
       complex *16 gradloc(2),graddir(2),graddir_loc(2)
       complex *16 pot1,pot2,pot3
       complex *16 eye,zsum,zz,zk1,zk2,zsum1,zsum2,det
+
+      integer ipass(6), isum, ntests
 c
       data eye/(0.0d0,1.0d0)/
 c
       call prini(6,13)
       pi = 4.0d0*datan(1.0d0)
+
+      write(*,*) "==========================="
+      write(*,*) "Testing suite for dielectric solve"
+      open(unit=33, file='print_testres.txt', access='append')
+
+      ntests = 6
+      do i=1,ntests
+        ipass(i) = 0
+      enddo
 c
 c     Set Helmholtz freq.
 c
@@ -252,8 +263,13 @@ ccc         sigma(i) = sigma(i)/sq1
       call prin2(' graddir is *',graddir,4)
       call prin2(' ratio is *',pot/zsum1,2)
       call prin2(' err is *',abs(pot-zsum1),1)
-      call prin2(' err1 is *',abs(graddir(1)-grad(1)),1)
-      call prin2(' err2 is *',abs(graddir(2)-grad(2)),1)
+      if(abs(pot-zsum1).lt.tol) ipass(1) = 1
+      
+      ra = abs(graddir(1)) + abs(graddir(2))
+      call prin2(' err1 is *',abs(graddir(1)-grad(1))/ra,1)
+      call prin2(' err2 is *',abs(graddir(2)-grad(2))/ra,1)
+      if(abs(graddir(1)-grad(1))/ra.lt.tol) ipass(2) = 1
+      if(abs(graddir(2)-grad(2))/ra.lt.tol) ipass(3) = 1
 c
 c
 c     test target in lower half space
@@ -301,9 +317,25 @@ ccc         sigma(i) = sq1*sigma(i)/sq2
       call prin2(' graddir is *',graddir,4)
       call prin2(' ratio is *',pot/zsum1,2)
       call prin2(' err is *',abs(pot-zsum1),1)
-      call prin2(' err1 is *',abs(graddir(1)-grad(1)),1)
-      call prin2(' err2 is *',abs(graddir(2)-grad(2)),1)
+      if(abs(pot-zsum1).lt.tol) ipass(4) = 1
+      ra = abs(graddir(1)) + abs(graddir(2))
+      call prin2(' err1 is *',abs(graddir(1)-grad(1))/ra,1)
+      call prin2(' err2 is *',abs(graddir(2)-grad(2))/ra,1)
+      if(abs(graddir(1)-grad(1))/ra.lt.tol) ipass(5) = 1
+      if(abs(graddir(2)-grad(2))/ra.lt.tol) ipass(6) = 1
       call prinf(' ntot is *',ntot,1)
+
+      isum = 0
+      do i=1,ntests
+        isum = isum+ipass(i)
+      enddo
+
+      write(*,'(a,i2,a,i2,a)') 'Successfully completed ',isum,
+     1   ' out of ',ntests,' tests in dielectric suite'
+      write(33,'(a,i2,a,i2,a)') 'Successfully completed ',isum,
+     1   ' out of ',ntests,' tests in dielectric suite'
+      close(33)
+      
 c     
       stop
       end

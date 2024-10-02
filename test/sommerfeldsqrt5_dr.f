@@ -38,10 +38,21 @@ c
       complex *16 h0,h1,pot,grad(2),hess(3)
       complex *16 pot1,pot2,pot3
       complex *16 eye,zsum,zz,zk1,zk2,zk
+
+      integer ipass(4), isum, ntests
 c
       data eye/(0.0d0,1.0d0)/
 c
       call prini(6,13)
+
+      write(*,*) "==========================="
+      write(*,*) "Testing suite for alpert Sommerfeld quadrature"
+      open(unit=33, file='print_testres.txt', access='append')
+
+      ntests = 4
+      do i=1,ntests
+        ipass(i) = 0
+      enddo
       pi = 4.0d0*datan(1.0d0)
       zk1 = 100.0d0*pi
       zk2 = 200.0d0*2*pi*sqrt(1.0d0+0.001d0*eye)
@@ -76,7 +87,7 @@ c     exp(- \sqrt{\lambda^2- k^2} y = tol ->
 c     once \lambda > k -> exponential decay of order exp(- \lambda y)
 c     \lambda approx (1+C)*real(zk2) + log(tol)/rymin
 c
-      tol = 1.0d-4
+      tol = 1.0d-10
       tmax = 1.3d0*real(zk2) + abs(log(tol))/rymin
       write(6,*) ' tmax = ',tmax
       norder = 16
@@ -133,6 +144,7 @@ ccc     1 ztrg,zk,pot,grad,hess)
       call prin2(' pot is *',pot,2)
       call prin2(' ratio is *',pot/zsum,2)
       call prin2(' err is *',abs(pot-zsum),1)
+      if(abs(pot-zsum).lt.tol) ipass(1) = 1
 c
 c
       ztrg(2) = -2.0d0*pi/dreal(zk2)/2.0d0
@@ -152,6 +164,7 @@ ccc     1 ztrg,zk,pot,grad,hess)
       call prin2(' pot is *',pot,2)
       call prin2(' ratio is *',pot/zsum,2)
       call prin2(' err is *',abs(pot-zsum),1)
+      if(abs(pot-zsum).lt.tol) ipass(2) = 1
 c
       ztrg(2) = -2.0d0*pi/dreal(zk2)/4.0d0
       call prin2(' ztrg is *',ztrg,2)
@@ -168,7 +181,7 @@ ccc     1 ztrg,zk,pot,grad,hess)
       call prin2(' pot is *',pot,2)
       call prin2(' ratio is *',pot/zsum,2)
       call prin2(' err is *',abs(pot-zsum),1)
-      stop
+      if(abs(pot-zsum).gt.tol) ipass(3) = 1
       y3 = ztrg(2)
       pot3 = zsum
       pot = 0.0d0
@@ -186,6 +199,19 @@ c
       call prin2(' pot is *',pot,2)
       call prin2(' ratio is *',pot/pot3,2)
       call prin2(' err is *',abs(pot-pot3),1)
+      if(abs(pot-pot3).gt.tol) ipass(4) = 1
+
+      isum = 0
+      do i=1,ntests
+        isum = isum+ipass(i)
+      enddo
+
+      write(*,'(a,i2,a,i2,a)') 'Successfully completed ',isum,
+     1   ' out of ',ntests,' tests in alpert Sommerfeld suite'
+      write(33,'(a,i2,a,i2,a)') 'Successfully completed ',isum,
+     1   ' out of ',ntests,' tests in alpert Sommerfeld suite'
+      close(33)
+      
 c
       stop
       end

@@ -1,2 +1,8 @@
 *.o
 fort.*
+*.a
+*.so
+*int2*
+*a.out*
+make.inc
+*.mex*
